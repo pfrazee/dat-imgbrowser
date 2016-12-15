@@ -1,0 +1,28 @@
+<script>
+class ImgBrowserCtrls extends HTMLElement {
+  createdCallback() {
+    this.innerHTML = `
+      <div class="pa2">
+        <input class="ph2 pv1 w-100" placeholder="URL">
+      </div>
+    `
+    this.querySelector('input').addEventListener('change', this.onUrlChange.bind(this))
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case 'url':
+        var inputEl = this.querySelector('input')
+        inputEl.value = newValue
+        this.onUrlChange({ target: inputEl })
+        break
+    }
+  }
+
+  onUrlChange(e) {
+    this.dispatchEvent(new CustomEvent('url-change', { detail: e.target.value }))
+  }
+}
+
+document.registerElement('img-browser-ctrls', ImgBrowserCtrls)
+</script>

@@ -1,0 +1,97 @@
+<style>
+.grid {
+  column-count: 4;
+  column-gap: 1em;
+}
+.grid-item {
+  display: inline-block;
+  margin: 0 0 1em;
+  width: 100%;
+}
+</style>
+
+<script>
+function listImages (url) {
+  return dat.listFiles(url).then(listing => {
+    // find all folders and images
+    var filteredListing = []
+    for (var name in listing) {
+      var entry = listing[name]
+      if (isImg(name)) {
+        // check if there's a json meta
+        entry.hasMetaFile = ((name + '.json') in listing)
+        filteredListing.push(entry)
+      }
+    }
+
+    return filteredListing
+  })
+}
+
+function isImg (name) {
+  return /\.(jpe?g|png|gif)$/i.test(name)
+}
+
+class ImgBrowserGrid extends HTMLElement {
+  createdCallback() {
+    this.url = false
+    this.images = []
+
+    this.render()
+    this.fetchImages()
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case 'url':
+        this.url = newValue
+        this.fetchImages()
+        break
+    }
+  }
+
+  fetchImages() {
+    if (!this.url) return this.render()
+    listImages(this.url)
+      .catch(err => [])
+      .then(images => {
+        this.images = images
+        this.render()
+      })
+  }
+
+  render() {
+    if (!this.url) return this.renderNoUrl()
+    if (!this.images.length) return this.renderEmpty()
+    this.innerHTML = `
+    <div class="grid ph3 pv2">
+      ${this.images.map(image => {
+        var url = new URL(image.name, this.url)
+        return `<div class="grid-item">
+          <a href="${url}" target="_blank"><img src="${url}" /></a>
+        </div>`
+      }).join('')}
+    </div>`
+  }
+
+  renderNoUrl() {
+    this.innerHTML = `
+    <div class="ph3-ns">
+      <div class="cf ph2-ns">
+        <div class="fl w-100 pa2">Enter a Dat URL to see all images in the folder</div>
+      </div>
+    </div>`
+  }
+
+  renderEmpty() {
+    this.innerHTML = `
+    <div class="ph3-ns">
+      <div class="cf ph2-ns">
+        <div class="fl w-100 pa2">No images found</div>
+      </div>
+    </div>`    
+  }
+}
+
+document.registerElement('img-browser-grid', ImgBrowserGrid)
+</script>
